@@ -358,8 +358,9 @@ async function saveItem(itemId) {
   showToast('Saving\u2026');
   var res = await sb.from('collections').insert(row).select().single();
   if (res.error) {
-    showToast('Error: ' + (res.error.message || JSON.stringify(res.error)));
-    console.error('Save error:', res.error);
+    var msg = res.error.message || res.error.code || res.error.details || JSON.stringify(res.error);
+    showToast('DB Error: ' + msg, 6000);
+    console.error('Save error full:', JSON.stringify(res.error));
     return;
   }
   collection.unshift(res.data);
