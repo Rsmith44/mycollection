@@ -297,7 +297,11 @@ async function submitAuth() {
   try {
     var result;
     if (authMode === 'signup') {
-      result = await sb.auth.signUp({ email: email, password: password });
+      result = await sb.auth.signUp({
+        email: email,
+        password: password,
+        options: { emailRedirectTo: 'https://rsmith44.github.io/mycollection/' }
+      });
       if (result.error) throw result.error;
       if (result.data.user && !result.data.session) {
         errEl.style.color = '#2ecc71';
