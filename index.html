@@ -393,7 +393,7 @@ updateNavBtn();
 // Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js').catch(function(e) {
+    navigator.serviceWorker.register('/mycollection/sw.js').catch(function(e) {
       console.log('SW registration failed:', e);
     });
   });

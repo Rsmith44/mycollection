@@ -1,7 +1,7 @@
 var CACHE = 'mycollection-v1';
 var ASSETS = [
-  '/',
-  '/index.html'
+  '/mycollection/',
+  '/mycollection/index.html'
 ];
 
 self.addEventListener('install', function(e) {
