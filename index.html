@@ -4,34 +4,76 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>myCollection</title>
-
-<!-- PWA -->
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#1a1a1a" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="myCollection" />
 <link rel="apple-touch-icon" href="icon-192.png" />
-
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Lato', sans-serif; background: #f7f5f0; min-height: 100vh;
-  /* Safe area insets for iPhone notch/home bar */
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* ── Auth overlay ─────────────────────────────────────────────────────── */
+#auth-overlay {
+  position: fixed; inset: 0; background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 24px;
+}
+#auth-box {
+  background: #fff; border-radius: 20px; padding: 40px 36px;
+  width: 100%; max-width: 380px; text-align: center;
+}
+#auth-box h1 {
+  font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900;
+  color: #1a1a1a; margin-bottom: 6px;
+}
+#auth-box h1 em { color: #d4a853; font-style: normal; }
+#auth-box p { color: #888; font-size: 0.9rem; margin-bottom: 28px; }
+.auth-input {
+  width: 100%; padding: 12px 16px; border-radius: 10px;
+  border: 2px solid #e0ddd6; font-size: 1rem; font-family: 'Lato', sans-serif;
+  color: #1a1a1a; outline: none; margin-bottom: 12px; display: block;
+}
+.auth-input:focus { border-color: #d4a853; }
+.auth-submit {
+  width: 100%; padding: 13px; border-radius: 10px; border: none;
+  background: #1a1a1a; color: #fff; font-weight: 700; font-size: 1rem;
+  cursor: pointer; font-family: 'Lato', sans-serif; margin-bottom: 16px;
+  transition: background 0.15s;
+}
+.auth-submit:hover { background: #333; }
+.auth-submit:disabled { background: #bbb; cursor: default; }
+#auth-toggle { font-size: 0.85rem; color: #888; }
+#auth-toggle a { color: #d4a853; cursor: pointer; text-decoration: none; font-weight: 700; }
+#auth-error { color: #e00; font-size: 0.82rem; margin-bottom: 12px; min-height: 18px; }
+#auth-mode-label { font-weight: 700; font-size: 1.1rem; color: #1a1a1a; margin-bottom: 20px; }
+
+/* ── Header ───────────────────────────────────────────────────────────── */
 #header {
   background: #1a1a1a; padding: 0 24px; position: sticky; top: 0; z-index: 100;
   box-shadow: 0 2px 20px rgba(0,0,0,0.3);
   padding-top: env(safe-area-inset-top);
 }
-#header-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 12px; height: 60px; }
-#logo { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.3rem; color: #fff; margin-right: 16px; }
+#header-inner {
+  max-width: 1100px; margin: 0 auto; display: flex;
+  align-items: center; gap: 8px; height: 60px;
+}
+#logo { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.3rem; color: #fff; margin-right: 8px; flex-shrink: 0; }
 #logo em { color: #d4a853; font-style: normal; }
-.nav-btn { padding: 6px 16px; border-radius: 8px; border: none; font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; font-family: 'Lato', sans-serif; background: transparent; color: #888; }
+.nav-btn { padding: 6px 14px; border-radius: 8px; border: none; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; font-family: 'Lato', sans-serif; background: transparent; color: #888; white-space: nowrap; }
 .nav-btn:hover { color: #fff; }
 .nav-btn.active { background: #d4a853; color: #1a1a1a; }
+#user-info { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+#user-email { font-size: 0.75rem; color: #666; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#signout-btn { padding: 5px 12px; border-radius: 7px; border: 1px solid #444; background: transparent; color: #888; font-size: 0.75rem; cursor: pointer; font-family: 'Lato', sans-serif; transition: all 0.15s; white-space: nowrap; }
+#signout-btn:hover { border-color: #888; color: #fff; }
+
+/* ── Main ─────────────────────────────────────────────────────────────── */
 #main { max-width: 1100px; margin: 0 auto; padding: 36px 24px; }
 .page-title { font-family: 'Playfair Display', serif; font-weight: 900; font-size: clamp(1.8rem, 4vw, 2.6rem); color: #1a1a1a; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 8px; }
 .page-sub { color: #888; font-size: 0.95rem; margin-bottom: 28px; }
@@ -44,6 +86,8 @@ body {
 #search-btn:disabled { background: #bbb; cursor: default; }
 #status { font-size: 0.85rem; margin-bottom: 16px; color: #888; min-height: 20px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 20px; }
+
+/* ── Cards ────────────────────────────────────────────────────────────── */
 .card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.07); transition: box-shadow 0.2s, transform 0.2s; display: flex; flex-direction: column; }
 .card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.14); transform: translateY(-4px); }
 .card-art { position: relative; padding-top: 140%; background: #eee; flex-shrink: 0; overflow: hidden; }
@@ -58,120 +102,304 @@ body {
 .card-sub   { font-size: 0.78rem; color: #888; }
 .card-year  { font-size: 0.73rem; color: #aaa; }
 .card-extra { font-size: 0.7rem; color: #bbb; font-style: italic; }
-.card-btn-wrap { margin-top: auto; padding-top: 10px; }
-.card-btn-wrap button { width: 100%; padding: 7px 0; border-radius: 8px; font-weight: 700; font-size: 0.76rem; cursor: pointer; transition: all 0.15s; font-family: 'Lato', sans-serif; }
+.card-actions { margin-top: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.card-actions button { width: 100%; padding: 7px 0; border-radius: 8px; font-weight: 700; font-size: 0.76rem; cursor: pointer; transition: all 0.15s; font-family: 'Lato', sans-serif; }
 .btn-save   { border: none; background: #1a1a1a; color: #fff; }
 .btn-save:hover { background: #333; }
 .btn-remove { border: 1.5px solid #ddd; background: #fafafa; color: #999; }
 .btn-remove:hover { background: #fff0f0; color: #e00; border-color: #e00; }
+
+/* Owned toggle */
+.owned-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.owned-checkbox {
+  appearance: none; width: 16px; height: 16px; border-radius: 4px;
+  border: 2px solid #ddd; background: #fff; cursor: pointer;
+  flex-shrink: 0; position: relative; transition: all 0.15s;
+}
+.owned-checkbox:checked { background: #2ecc71; border-color: #2ecc71; }
+.owned-checkbox:checked::after {
+  content: ''; position: absolute; left: 3px; top: 0px;
+  width: 5px; height: 9px; border: 2px solid #fff;
+  border-top: none; border-left: none; transform: rotate(45deg);
+}
+.owned-label { font-size: 0.74rem; color: #888; cursor: pointer; user-select: none; }
+.owned-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: #2ecc71; color: #fff; font-size: 0.6rem; font-weight: 700;
+  padding: 2px 6px; border-radius: 99px; letter-spacing: 0.05em;
+}
+
+/* ── Tabs & Collection ────────────────────────────────────────────────── */
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
 .tab { padding: 8px 18px; border-radius: 99px; font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; font-family: 'Lato', sans-serif; border: 1.5px solid #ddd; background: #fff; color: #555; }
 .tab:hover { border-color: #aaa; }
 .tab.active { border-color: transparent; background: #1a1a1a; color: #fff; }
+.col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.filter-owned { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #666; cursor: pointer; }
+.filter-owned input { width: 15px; height: 15px; cursor: pointer; accent-color: #1a1a1a; }
 .empty { text-align: center; padding: 80px 0; color: #bbb; border-top: 1px solid #ede9e0; margin-top: 8px; }
 .empty-icon  { font-size: 52px; margin-bottom: 14px; }
 .empty-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; margin-bottom: 18px; }
 .empty-btn { padding: 10px 24px; border-radius: 10px; border: none; background: #1a1a1a; color: #fff; font-weight: 700; cursor: pointer; font-size: 0.85rem; font-family: 'Lato', sans-serif; }
 .empty-btn:hover { background: #333; }
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
 #toast { position: fixed; bottom: calc(28px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(16px); background: #1a1a1a; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 0.88rem; font-weight: 700; box-shadow: 0 8px 30px rgba(0,0,0,0.2); z-index: 999; font-family: 'Lato', sans-serif; white-space: nowrap; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* Mobile tweaks */
+/* ── Loading spinner ──────────────────────────────────────────────────── */
+#loading-overlay { position:fixed;inset:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;z-index:2000; }
+.spinner { width:36px;height:36px;border:3px solid #333;border-top-color:#d4a853;border-radius:50%;animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 @media (max-width: 500px) {
   #main { padding: 24px 16px; }
-  .search-row { gap: 8px; }
-  .search-row input { font-size: 16px; } /* prevents iOS zoom on focus */
-  .search-row select { font-size: 16px; }
-  #search-btn { padding: 12px 20px; }
+  .search-row input, .search-row select { font-size: 16px; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+  #user-email { display: none; }
 }
 </style>
 </head>
 <body>
 
-<div id="header">
-  <div id="header-inner">
-    <div id="logo"><em>my</em>collection</div>
-    <button class="nav-btn active" id="btn-search" onclick="showSearch()">Search</button>
-    <button class="nav-btn" id="btn-collection" onclick="showCollection()">Collection (0)</button>
+<!-- Loading -->
+<div id="loading-overlay"><div class="spinner"></div></div>
+
+<!-- Auth -->
+<div id="auth-overlay" style="display:none">
+  <div id="auth-box">
+    <h1><em>my</em>collection</h1>
+    <p>Save your favourite movies, TV shows &amp; albums</p>
+    <div id="auth-mode-label">Sign in</div>
+    <div id="auth-error"></div>
+    <input class="auth-input" id="auth-email" type="email" placeholder="Email address" />
+    <input class="auth-input" id="auth-password" type="password" placeholder="Password" />
+    <button class="auth-submit" id="auth-submit-btn" onclick="submitAuth()">Sign in</button>
+    <div id="auth-toggle">
+      <span id="auth-toggle-text">Don't have an account?</span>
+      <a onclick="toggleAuthMode()"> <span id="auth-toggle-link">Create one</span></a>
+    </div>
   </div>
 </div>
 
-<div id="main">
-  <div id="view-search">
-    <h1 class="page-title">Find something<br>worth keeping.</h1>
-    <p class="page-sub">Search movies, TV shows, and albums — then save them to your collection.</p>
-    <div class="search-row">
-      <input id="q" type="text" placeholder="e.g. Pink Floyd, Sopranos, Dune…" onkeydown="if(event.key==='Enter')doSearch()" />
-      <select id="media-type">
-        <option value="all">All Types</option>
-        <option value="movie">Movies</option>
-        <option value="tv">TV Shows</option>
-        <option value="album">Albums</option>
-      </select>
-      <button id="search-btn" onclick="doSearch()">Search</button>
-    </div>
-    <div id="status"></div>
-    <div id="search-results" class="grid"></div>
-    <div id="search-empty" class="empty">
-      <div class="empty-icon">🎬 📺 🎵</div>
-      <div class="empty-title">Your next favourite is out there</div>
+<!-- App -->
+<div id="app" style="display:none">
+  <div id="header">
+    <div id="header-inner">
+      <div id="logo"><em>my</em>collection</div>
+      <button class="nav-btn active" id="btn-search" onclick="showSearch()">Search</button>
+      <button class="nav-btn" id="btn-collection" onclick="showCollection()">Collection (0)</button>
+      <div id="user-info">
+        <span id="user-email"></span>
+        <button id="signout-btn" onclick="signOut()">Sign out</button>
+      </div>
     </div>
   </div>
 
-  <div id="view-collection" style="display:none">
-    <h1 class="page-title" style="margin-bottom:20px">My Collection</h1>
-    <div class="tabs">
-      <button class="tab active" id="tab-all"   onclick="setTab('all')">All (0)</button>
-      <button class="tab"        id="tab-movie" onclick="setTab('movie')">Movies (0)</button>
-      <button class="tab"        id="tab-tv"    onclick="setTab('tv')">TV Shows (0)</button>
-      <button class="tab"        id="tab-album" onclick="setTab('album')">Albums (0)</button>
+  <div id="main">
+    <div id="view-search">
+      <h1 class="page-title">Find something<br>worth keeping.</h1>
+      <p class="page-sub">Search movies, TV shows, and albums — then save them to your collection.</p>
+      <div class="search-row">
+        <input id="q" type="text" placeholder="e.g. Pink Floyd, Sopranos, Dune…" onkeydown="if(event.key==='Enter')doSearch()" />
+        <select id="media-type">
+          <option value="all">All Types</option>
+          <option value="movie">Movies</option>
+          <option value="tv">TV Shows</option>
+          <option value="album">Albums</option>
+        </select>
+        <button id="search-btn" onclick="doSearch()">Search</button>
+      </div>
+      <div id="status"></div>
+      <div id="search-results" class="grid"></div>
+      <div id="search-empty" class="empty">
+        <div class="empty-icon">🎬 📺 🎵</div>
+        <div class="empty-title">Your next favourite is out there</div>
+      </div>
     </div>
-    <div id="col-results" class="grid"></div>
-    <div id="col-empty" class="empty" style="display:none">
-      <div class="empty-icon">✨</div>
-      <div class="empty-title">Nothing here yet</div>
-      <button class="empty-btn" onclick="showSearch()">Search &amp; add something</button>
+
+    <div id="view-collection" style="display:none">
+      <div class="col-header">
+        <h1 class="page-title" style="margin-bottom:0">My Collection</h1>
+        <label class="filter-owned">
+          <input type="checkbox" id="filter-owned-cb" onchange="renderCollection()" />
+          Show owned only
+        </label>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tab-all"   onclick="setTab('all')">All (0)</button>
+        <button class="tab"        id="tab-movie" onclick="setTab('movie')">Movies (0)</button>
+        <button class="tab"        id="tab-tv"    onclick="setTab('tv')">TV Shows (0)</button>
+        <button class="tab"        id="tab-album" onclick="setTab('album')">Albums (0)</button>
+      </div>
+      <div id="col-results" class="grid"></div>
+      <div id="col-empty" class="empty" style="display:none">
+        <div class="empty-icon">✨</div>
+        <div class="empty-title">Nothing here yet</div>
+        <button class="empty-btn" onclick="showSearch()">Search &amp; add something</button>
+      </div>
     </div>
   </div>
 </div>
+
 <div id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-var OMDB_KEY  = '4287ad07';
-var collection  = [];
-var itemCache   = {};
-var currentTab  = 'all';
-var lastResults = [];
-try { collection = JSON.parse(localStorage.getItem('mc6') || '[]'); } catch(e) { collection = []; }
-collection.forEach(function(x){ itemCache[x.id] = x; });
+// ── Supabase ───────────────────────────────────────────────────────────────
+var SUPA_URL = 'https://zeuduesiqi gnlcluwili.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpldWR1ZXNpcWlnbmxjbHV3aWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjIxNTAsImV4cCI6MjA5MzU5ODE1MH0.WFcZU0cOlwjpLpz7fkw95nCT7kFNnW4TrJjqdyrhVJA';
+var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-function persist() { try { localStorage.setItem('mc6', JSON.stringify(collection)); } catch(e){} }
-function isSaved(id) { for(var i=0;i<collection.length;i++){if(collection[i].id===id)return true;} return false; }
-function setStatus(msg) { document.getElementById('status').textContent = msg; }
+var OMDB_KEY   = '4287ad07';
+var collection = [];   // array of row objects from DB
+var itemCache  = {};
+var currentTab = 'all';
+var lastResults = [];
+var currentUser = null;
+var authMode = 'signin'; // 'signin' | 'signup'
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function setStatus(msg) { document.getElementById('status').textContent = msg; }
 function showToast(msg) {
   var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   setTimeout(function(){t.classList.remove('show');},2200);
 }
+function isSaved(itemId) {
+  for(var i=0;i<collection.length;i++) if(collection[i].item_id===itemId) return true;
+  return false;
+}
+function getOwned(itemId) {
+  for(var i=0;i<collection.length;i++) if(collection[i].item_id===itemId) return collection[i].owned||false;
+  return false;
+}
 
+// ── Auth ───────────────────────────────────────────────────────────────────
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  var isSignin = authMode === 'signin';
+  document.getElementById('auth-mode-label').textContent = isSignin ? 'Sign in' : 'Create account';
+  document.getElementById('auth-submit-btn').textContent = isSignin ? 'Sign in' : 'Create account';
+  document.getElementById('auth-toggle-text').textContent = isSignin ? "Don't have an account?" : 'Already have an account?';
+  document.getElementById('auth-toggle-link').textContent = isSignin ? 'Create one' : 'Sign in';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function submitAuth() {
+  var email = document.getElementById('auth-email').value.trim();
+  var password = document.getElementById('auth-password').value;
+  var errEl = document.getElementById('auth-error');
+  var btn = document.getElementById('auth-submit-btn');
+  if (!email || !password) { errEl.textContent = 'Please enter email and password.'; return; }
+  btn.disabled = true;
+  errEl.textContent = '';
+  try {
+    var result;
+    if (authMode === 'signup') {
+      result = await sb.auth.signUp({ email: email, password: password });
+      if (result.error) throw result.error;
+      if (result.data.user && !result.data.session) {
+        errEl.style.color = '#2ecc71';
+        errEl.textContent = 'Check your email to confirm your account!';
+        btn.disabled = false;
+        return;
+      }
+    } else {
+      result = await sb.auth.signInWithPassword({ email: email, password: password });
+      if (result.error) throw result.error;
+    }
+  } catch(e) {
+    errEl.style.color = '#e00';
+    errEl.textContent = e.message || 'Something went wrong.';
+    btn.disabled = false;
+  }
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  collection = [];
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+// ── Load collection from Supabase ──────────────────────────────────────────
+async function loadCollection() {
+  if (!currentUser) return;
+  var res = await sb.from('collections').select('*').eq('user_id', currentUser.id).order('created_at', {ascending: false});
+  if (res.error) { console.error(res.error); return; }
+  collection = res.data || [];
+  collection.forEach(function(r){ itemCache[r.item_id] = r; });
+  updateNavBtn();
+}
+
+// ── Save / Remove / Toggle owned ───────────────────────────────────────────
+async function saveItem(itemId) {
+  var item = itemCache[itemId];
+  if (!item || isSaved(itemId)) return;
+  var row = {
+    user_id:  currentUser.id,
+    item_id:  item.id,
+    title:    item.title,
+    subtitle: item.subtitle || '',
+    year:     item.year || '',
+    type:     item.type,
+    image:    item.image || '',
+    extra:    item.extra || '',
+    owned:    false
+  };
+  var res = await sb.from('collections').insert(row).select().single();
+  if (res.error) { console.error(res.error); showToast('Error saving item'); return; }
+  collection.unshift(res.data);
+  itemCache[itemId] = res.data;
+  updateNavBtn();
+  renderGrid('search-results', lastResults);
+  showToast('Saved \u201c'+item.title+'\u201d');
+}
+
+async function removeItem(itemId) {
+  var row = collection.find(function(r){ return r.item_id===itemId; });
+  if (!row) return;
+  var res = await sb.from('collections').delete().eq('id', row.id);
+  if (res.error) { console.error(res.error); return; }
+  collection = collection.filter(function(r){ return r.item_id!==itemId; });
+  updateNavBtn();
+  renderGrid('search-results', lastResults);
+  if (document.getElementById('view-collection').style.display!=='none') renderCollection();
+  showToast('Removed \u201c'+row.title+'\u201d');
+}
+
+async function toggleOwned(itemId) {
+  var row = collection.find(function(r){ return r.item_id===itemId; });
+  if (!row) return;
+  var newOwned = !row.owned;
+  var res = await sb.from('collections').update({owned: newOwned}).eq('id', row.id);
+  if (res.error) { console.error(res.error); return; }
+  row.owned = newOwned;
+  // Re-render wherever this card appears
+  renderGrid('search-results', lastResults);
+  if (document.getElementById('view-collection').style.display!=='none') renderCollection();
+}
+
+// ── JSONP ──────────────────────────────────────────────────────────────────
 function jsonpFetch(url) {
   return new Promise(function(resolve, reject) {
     var id = 'jcb' + Date.now() + Math.floor(Math.random()*99999);
     var script = document.createElement('script');
     var settled = false;
     var timer = setTimeout(function(){
-      if(settled) return; settled=true; delete window[id];
+      if(settled)return; settled=true; delete window[id];
       if(script.parentNode) script.parentNode.removeChild(script);
       reject(new Error('timeout'));
     }, 12000);
     window[id] = function(data) {
-      if(settled) return; settled=true; clearTimeout(timer); delete window[id];
+      if(settled)return; settled=true; clearTimeout(timer); delete window[id];
       if(script.parentNode) script.parentNode.removeChild(script);
       resolve(data);
     };
     script.onerror = function() {
-      if(settled) return; settled=true; clearTimeout(timer); delete window[id];
+      if(settled)return; settled=true; clearTimeout(timer); delete window[id];
       if(script.parentNode) script.parentNode.removeChild(script);
       reject(new Error('load error'));
     };
@@ -180,115 +408,93 @@ function jsonpFetch(url) {
   });
 }
 
-function bigArt(url) {
-  if (!url) return '';
-  return url.replace(/\d+x\d+bb/, '400x400bb');
-}
+function bigArt(url) { return url ? url.replace(/\d+x\d+bb/,'400x400bb') : ''; }
 
 function sortResults(items, q) {
   var ql = q.toLowerCase();
-  return items.slice().sort(function(a, b) {
-    var al = a.title.toLowerCase(), bl = b.title.toLowerCase();
-    var aExact = al === ql ? 2 : al.indexOf(ql) === 0 ? 1 : 0;
-    var bExact = bl === ql ? 2 : bl.indexOf(ql) === 0 ? 1 : 0;
-    if (bExact !== aExact) return bExact - aExact;
-    return (b._score || 0) - (a._score || 0);
+  return items.slice().sort(function(a,b){
+    var al=a.title.toLowerCase(), bl=b.title.toLowerCase();
+    var ae=al===ql?2:al.indexOf(ql)===0?1:0, be=bl===ql?2:bl.indexOf(ql)===0?1:0;
+    if(be!==ae) return be-ae;
+    return (b._score||0)-(a._score||0);
   });
 }
 
+// ── Fetch functions ────────────────────────────────────────────────────────
 function fetchAlbums(q) {
-  var url = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q)
-          + '&media=music&entity=song&limit=200&country=us';
-  return jsonpFetch(url).then(function(data) {
-    var seen = {}, freq = {}, albums = [];
-    var results = data.results || [];
-    for (var i = 0; i < results.length; i++) {
-      var r = results[i];
-      if (!r.collectionId) continue;
-      freq[r.collectionId] = (freq[r.collectionId] || 0) + 1;
-      if (seen[r.collectionId]) continue;
-      seen[r.collectionId] = true;
-      albums.push({
-        id:       'al-' + r.collectionId,
-        title:    r.collectionName || '',
-        subtitle: r.artistName || '',
-        year:     r.releaseDate ? r.releaseDate.slice(0,4) : '',
-        type:     'album',
-        image:    bigArt(r.artworkUrl100),
-        extra:    r.primaryGenreName || '',
-        _score:   0
-      });
+  var url = 'https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&media=music&entity=song&limit=200&country=us';
+  return jsonpFetch(url).then(function(data){
+    var seen={}, freq={}, albums=[], results=data.results||[];
+    for(var i=0;i<results.length;i++){
+      var r=results[i]; if(!r.collectionId) continue;
+      freq[r.collectionId]=(freq[r.collectionId]||0)+1;
+      if(seen[r.collectionId]) continue; seen[r.collectionId]=true;
+      albums.push({id:'al-'+r.collectionId,title:r.collectionName||'',subtitle:r.artistName||'',
+        year:r.releaseDate?r.releaseDate.slice(0,4):'',type:'album',image:bigArt(r.artworkUrl100),
+        extra:r.primaryGenreName||'',_score:0});
     }
-    for (var j = 0; j < albums.length; j++) {
-      albums[j]._score = freq[albums[j].id.replace('al-','')] || 0;
-    }
-    return sortResults(albums, q);
-  }).catch(function(e){ console.warn('albums:', e); return []; });
+    for(var j=0;j<albums.length;j++) albums[j]._score=freq[albums[j].id.replace('al-','')]||0;
+    return sortResults(albums,q);
+  }).catch(function(){ return []; });
 }
 
 function fetchMovies(q) {
-  var url = 'https://www.omdbapi.com/?s=' + encodeURIComponent(q) + '&type=movie&apikey=' + OMDB_KEY;
-  return fetch(url)
-    .then(function(r){ return r.json(); })
-    .then(function(data) {
-      if (data.Response !== 'True') return [];
-      return sortResults(data.Search.map(function(x, i) {
-        return {
-          id: 'mv-'+x.imdbID, title: x.Title||'', subtitle: '', year: x.Year||'',
-          type: 'movie', image: (x.Poster&&x.Poster!=='N/A')?x.Poster:'', extra: '',
-          _score: (data.Search.length - i)
-        };
-      }), q);
-    }).catch(function(e){ console.warn('movies:', e); return []; });
+  return fetch('https://www.omdbapi.com/?s='+encodeURIComponent(q)+'&type=movie&apikey='+OMDB_KEY)
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.Response!=='True') return [];
+      return sortResults((data.Search||[]).map(function(x,i){
+        return {id:'mv-'+x.imdbID,title:x.Title||'',subtitle:'',year:x.Year||'',type:'movie',
+          image:(x.Poster&&x.Poster!=='N/A')?x.Poster:'',extra:'',_score:(data.Search.length-i)};
+      }),q);
+    }).catch(function(){ return []; });
 }
 
 function fetchTV(q) {
-  return fetch('https://api.tvmaze.com/search/shows?q=' + encodeURIComponent(q))
-    .then(function(r){ return r.json(); })
+  return fetch('https://api.tvmaze.com/search/shows?q='+encodeURIComponent(q))
+    .then(function(r){return r.json();})
     .then(function(data){
-      var out = [];
-      for (var i = 0; i < Math.min(data.length, 12); i++) {
-        var s = data[i].show;
-        out.push({
-          id: 'tv-'+s.id, title: s.name||'',
-          subtitle: (s.network&&s.network.name)||(s.webChannel&&s.webChannel.name)||'TV Series',
-          year: s.premiered?s.premiered.slice(0,4):'', type: 'tv',
-          image: (s.image&&(s.image.original||s.image.medium))||'',
-          extra: (s.genres||[]).slice(0,2).join(', '),
-          _score: data[i].score||0
-        });
+      var out=[];
+      for(var i=0;i<Math.min(data.length,12);i++){
+        var s=data[i].show;
+        out.push({id:'tv-'+s.id,title:s.name||'',
+          subtitle:(s.network&&s.network.name)||(s.webChannel&&s.webChannel.name)||'TV Series',
+          year:s.premiered?s.premiered.slice(0,4):'',type:'tv',
+          image:(s.image&&(s.image.original||s.image.medium))||'',
+          extra:(s.genres||[]).slice(0,2).join(', '),_score:data[i].score||0});
       }
-      return sortResults(out, q);
-    }).catch(function(e){ console.warn('tv:', e); return []; });
+      return sortResults(out,q);
+    }).catch(function(){ return []; });
 }
 
+// ── Search ─────────────────────────────────────────────────────────────────
 function doSearch() {
-  var q    = (document.getElementById('q').value || '').trim();
-  var type = document.getElementById('media-type').value;
-  if (!q) return;
-  var btn = document.getElementById('search-btn');
-  btn.disabled = true; btn.textContent = 'Searching\u2026';
+  var q=(document.getElementById('q').value||'').trim();
+  var type=document.getElementById('media-type').value;
+  if(!q) return;
+  var btn=document.getElementById('search-btn');
+  btn.disabled=true; btn.textContent='Searching\u2026';
   setStatus('Searching\u2026');
-  document.getElementById('search-empty').style.display = 'none';
-  document.getElementById('search-results').innerHTML = '';
-  var promises = [];
-  if (type==='all'||type==='movie') promises.push(fetchMovies(q));
-  if (type==='all'||type==='tv')    promises.push(fetchTV(q));
-  if (type==='all'||type==='album') promises.push(fetchAlbums(q));
-  Promise.all(promises).then(function(arrays) {
-    btn.disabled = false; btn.textContent = 'Search';
-    var results = [];
-    for (var i=0;i<arrays.length;i++) for (var j=0;j<arrays[i].length;j++) results.push(arrays[i][j]);
-    lastResults = results;
-    for (var k=0;k<results.length;k++) itemCache[results[k].id] = results[k];
-    if (results.length === 0) {
+  document.getElementById('search-empty').style.display='none';
+  document.getElementById('search-results').innerHTML='';
+  var promises=[];
+  if(type==='all'||type==='movie') promises.push(fetchMovies(q));
+  if(type==='all'||type==='tv')    promises.push(fetchTV(q));
+  if(type==='all'||type==='album') promises.push(fetchAlbums(q));
+  Promise.all(promises).then(function(arrays){
+    btn.disabled=false; btn.textContent='Search';
+    var results=[];
+    for(var i=0;i<arrays.length;i++) for(var j=0;j<arrays[i].length;j++) results.push(arrays[i][j]);
+    lastResults=results;
+    results.forEach(function(r){ if(!itemCache[r.id] || !itemCache[r.id].item_id) itemCache[r.id]=r; });
+    if(results.length===0){
       setStatus('');
-      document.getElementById('search-empty').style.display = '';
-      document.getElementById('search-empty').querySelector('.empty-title').textContent = 'No results found \u2014 try another search';
+      document.getElementById('search-empty').style.display='';
+      document.getElementById('search-empty').querySelector('.empty-title').textContent='No results found \u2014 try another search';
       return;
     }
     setStatus(results.length+' result'+(results.length!==1?'s':'')+' for \u201c'+q+'\u201d');
-    renderGrid('search-results', results);
+    renderGrid('search-results',results);
   }).catch(function(err){
     btn.disabled=false; btn.textContent='Search';
     setStatus('Something went wrong \u2014 check your internet connection.');
@@ -296,47 +502,53 @@ function doSearch() {
   });
 }
 
+// ── Card HTML ──────────────────────────────────────────────────────────────
 function cardHtml(item) {
-  var bc = item.type==='movie'?'badge-movie':item.type==='tv'?'badge-tv':'badge-album';
-  var lb = item.type==='movie'?'Movie':item.type==='tv'?'TV Show':'Album';
-  var ic = item.type==='movie'?'🎬':item.type==='tv'?'📺':'🎵';
-  var saved = isSaved(item.id);
-  var img = item.image?'<img src="'+esc(item.image)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'';
-  var btn = saved
-    ? '<button class="btn-remove" onclick="removeItem(\''+esc(item.id)+'\')">&#10003; Saved &mdash; Remove</button>'
-    : '<button class="btn-save"   onclick="saveItem(\''+esc(item.id)+'\')">+ Save to Collection</button>';
+  // item can be a search result object OR a DB row — normalise
+  var itemId  = item.item_id || item.id;
+  var title   = item.title||'';
+  var subtitle= item.subtitle||'';
+  var year    = item.year||'';
+  var type    = item.type||'movie';
+  var image   = item.image||'';
+  var extra   = item.extra||'';
+
+  var bc=type==='movie'?'badge-movie':type==='tv'?'badge-tv':'badge-album';
+  var lb=type==='movie'?'Movie':type==='tv'?'TV Show':'Album';
+  var ic=type==='movie'?'🎬':type==='tv'?'📺':'🎵';
+  var saved=isSaved(itemId);
+  var owned=getOwned(itemId);
+
+  var img=image?'<img src="'+esc(image)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'';
+  var ownedBadge=owned?'<span class="owned-badge">OWNED</span>':'';
+  var saveBtn=saved
+    ? '<button class="btn-remove" onclick="removeItem(\''+esc(itemId)+'\')">&#10003; Saved &mdash; Remove</button>'
+    : '<button class="btn-save"   onclick="saveItem(\''+esc(itemId)+'\')">+ Save to Collection</button>';
+  var ownedRow=saved
+    ? '<div class="owned-row">'
+      +'<input class="owned-checkbox" type="checkbox" id="own-'+esc(itemId)+'" '+(owned?'checked':'')+' onchange="toggleOwned(\''+esc(itemId)+'\')" />'
+      +'<label class="owned-label" for="own-'+esc(itemId)+'">I own this</label>'
+      +'</div>'
+    : '';
+
   return '<div class="card">'
-    +'<div class="card-art">'+img+'<div class="card-placeholder">'+ic+'</div><span class="badge '+bc+'">'+lb+'</span></div>'
+    +'<div class="card-art">'+img+'<div class="card-placeholder">'+ic+'</div>'
+    +'<span class="badge '+bc+'">'+lb+'</span>'+ownedBadge+'</div>'
     +'<div class="card-body">'
-    +'<div class="card-title">'+esc(item.title)+'</div>'
-    +'<div class="card-sub">'+esc(item.subtitle)+'</div>'
-    +(item.year?'<div class="card-year">'+esc(item.year)+'</div>':'')
-    +(item.extra?'<div class="card-extra">'+esc(item.extra)+'</div>':'')
-    +'<div class="card-btn-wrap">'+btn+'</div>'
+    +'<div class="card-title">'+esc(title)+'</div>'
+    +'<div class="card-sub">'+esc(subtitle)+'</div>'
+    +(year?'<div class="card-year">'+esc(year)+'</div>':'')
+    +(extra?'<div class="card-extra">'+esc(extra)+'</div>':'')
+    +'<div class="card-actions">'+saveBtn+ownedRow+'</div>'
     +'</div></div>';
 }
 
 function renderGrid(id, items) {
   var h=''; for(var i=0;i<items.length;i++) h+=cardHtml(items[i]);
-  document.getElementById(id).innerHTML = h;
+  document.getElementById(id).innerHTML=h;
 }
 
-function saveItem(id) {
-  var item=itemCache[id]; if(!item||isSaved(id)) return;
-  collection.unshift(item); persist(); updateNavBtn();
-  renderGrid('search-results', lastResults);
-  showToast('Saved \u201c'+item.title+'\u201d');
-}
-function removeItem(id) {
-  var item=itemCache[id];
-  var next=[];
-  for(var i=0;i<collection.length;i++) if(collection[i].id!==id) next.push(collection[i]);
-  collection=next; persist(); updateNavBtn();
-  renderGrid('search-results', lastResults);
-  if(document.getElementById('view-collection').style.display!=='none') renderCollection();
-  showToast(item?'Removed \u201c'+item.title+'\u201d':'Removed');
-}
-
+// ── Nav ────────────────────────────────────────────────────────────────────
 function showSearch() {
   document.getElementById('view-search').style.display='';
   document.getElementById('view-collection').style.display='none';
@@ -354,6 +566,7 @@ function updateNavBtn() {
   document.getElementById('btn-collection').textContent='Collection ('+collection.length+')';
 }
 
+// ── Collection ─────────────────────────────────────────────────────────────
 function setTab(tab) {
   currentTab=tab;
   ['all','movie','tv','album'].forEach(function(t){
@@ -363,17 +576,19 @@ function setTab(tab) {
 }
 
 function renderCollection() {
-  var items=[];
-  for(var i=0;i<collection.length;i++){
-    if(currentTab==='all'||collection[i].type===currentTab) items.push(collection[i]);
-  }
+  var filterOwned=document.getElementById('filter-owned-cb').checked;
+  var items=collection.filter(function(r){
+    if(currentTab!=='all'&&r.type!==currentTab) return false;
+    if(filterOwned&&!r.owned) return false;
+    return true;
+  });
   var grid=document.getElementById('col-results'), empty=document.getElementById('col-empty');
   if(items.length===0){
     grid.innerHTML=''; empty.style.display='';
     var icons={all:'✨',movie:'🎬',tv:'📺',album:'🎵'};
     var labels={all:'Your collection is empty',movie:'No movies saved yet',tv:'No TV shows saved yet',album:'No albums saved yet'};
     empty.querySelector('.empty-icon').textContent=icons[currentTab]||'✨';
-    empty.querySelector('.empty-title').textContent=labels[currentTab]||'Nothing here yet';
+    empty.querySelector('.empty-title').textContent=filterOwned?'Nothing marked as owned yet':labels[currentTab]||'Nothing here yet';
   } else {
     empty.style.display='none'; renderGrid('col-results',items);
   }
@@ -388,14 +603,27 @@ function renderCollection() {
   });
 }
 
-updateNavBtn();
+// ── Boot ───────────────────────────────────────────────────────────────────
+sb.auth.onAuthStateChange(async function(event, session) {
+  document.getElementById('loading-overlay').style.display='none';
+  if (session && session.user) {
+    currentUser = session.user;
+    document.getElementById('auth-overlay').style.display='none';
+    document.getElementById('app').style.display='';
+    document.getElementById('user-email').textContent=currentUser.email;
+    await loadCollection();
+    updateNavBtn();
+  } else {
+    currentUser = null;
+    collection = [];
+    document.getElementById('app').style.display='none';
+    document.getElementById('auth-overlay').style.display='flex';
+  }
+});
 
-// Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/mycollection/sw.js').catch(function(e) {
-      console.log('SW registration failed:', e);
-    });
+    navigator.serviceWorker.register('/mycollection/sw.js').catch(function(){});
   });
 }
 </script>
