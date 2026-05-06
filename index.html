@@ -262,9 +262,9 @@ var authMode = 'signin'; // 'signin' | 'signup'
 // ── Helpers ────────────────────────────────────────────────────────────────
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function setStatus(msg) { document.getElementById('status').textContent = msg; }
-function showToast(msg) {
+function showToast(msg, duration) {
   var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show');},2200);
+  setTimeout(function(){t.classList.remove('show');}, duration || 2200);
 }
 function isSaved(itemId) {
   for(var i=0;i<collection.length;i++) if(collection[i].item_id===itemId) return true;
@@ -340,8 +340,10 @@ async function loadCollection() {
 
 // ── Save / Remove / Toggle owned ───────────────────────────────────────────
 async function saveItem(itemId) {
+  if (!currentUser) { showToast('Not signed in'); return; }
   var item = itemCache[itemId];
-  if (!item || isSaved(itemId)) return;
+  if (!item) { showToast('Item not found: ' + itemId); return; }
+  if (isSaved(itemId)) { showToast('Already saved'); return; }
   var row = {
     user_id:  currentUser.id,
     item_id:  itemId,
@@ -353,15 +355,14 @@ async function saveItem(itemId) {
     extra:    item.extra || '',
     owned:    false
   };
+  showToast('Saving\u2026');
   var res = await sb.from('collections').insert(row).select().single();
   if (res.error) {
+    showToast('Error: ' + (res.error.message || JSON.stringify(res.error)));
     console.error('Save error:', res.error);
-    showToast('Error: ' + (res.error.message || 'Could not save'));
     return;
   }
   collection.unshift(res.data);
-  // Keep the original search result in itemCache under its id
-  // so isSaved() keeps working — don't overwrite with DB row
   updateNavBtn();
   renderGrid('search-results', lastResults);
   showToast('Saved \u201c'+item.title+'\u201d');
@@ -431,9 +432,9 @@ function sortResults(items, q) {
 
 // ── Fetch functions ────────────────────────────────────────────────────────
 function fetchAlbums(q) {
+  // Use JSONP — works on all platforms including iOS Safari
   var url = 'https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&media=music&entity=song&limit=200&country=us';
-  return fetch(url)
-    .then(function(r){ return r.json(); })
+  return jsonpFetch(url)
     .then(function(data){
       var seen={}, freq={}, albums=[], results=data.results||[];
       for(var i=0;i<results.length;i++){
@@ -446,7 +447,24 @@ function fetchAlbums(q) {
       }
       for(var j=0;j<albums.length;j++) albums[j]._score=freq[albums[j].id.replace('al-','')]||0;
       return sortResults(albums,q);
-    }).catch(function(){ return []; });
+    }).catch(function(e){ console.warn('albums jsonp failed, trying fetch:', e);
+      // Fallback to fetch for browsers that block JSONP
+      return fetch('https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&media=music&entity=song&limit=200&country=us')
+        .then(function(r){return r.json();})
+        .then(function(data){
+          var seen={}, freq={}, albums=[], results=data.results||[];
+          for(var i=0;i<results.length;i++){
+            var r=results[i]; if(!r.collectionId) continue;
+            freq[r.collectionId]=(freq[r.collectionId]||0)+1;
+            if(seen[r.collectionId]) continue; seen[r.collectionId]=true;
+            albums.push({id:'al-'+r.collectionId,title:r.collectionName||'',subtitle:r.artistName||'',
+              year:r.releaseDate?r.releaseDate.slice(0,4):'',type:'album',image:bigArt(r.artworkUrl100),
+              extra:r.primaryGenreName||'',_score:0});
+          }
+          for(var j=0;j<albums.length;j++) albums[j]._score=freq[albums[j].id.replace('al-','')]||0;
+          return sortResults(albums,q);
+        }).catch(function(){ return []; });
+    });
 }
 
 function fetchMovies(q) {
@@ -561,18 +579,31 @@ function renderGrid(id, items) {
   document.getElementById(id).innerHTML=h;
 }
 
-// Delegated click/change handler for all card actions
+// ── Card action helpers ────────────────────────────────────────────────────
+function findAction(el) {
+  var depth = 0;
+  while (el && depth < 5) {
+    if (el.getAttribute && el.getAttribute('data-action')) return el;
+    el = el.parentElement;
+    depth++;
+  }
+  return null;
+}
+
 document.addEventListener('click', function(e) {
-  var btn = e.target.closest('[data-action]');
+  var btn = findAction(e.target);
   if (!btn) return;
   var action = btn.getAttribute('data-action');
   var id     = btn.getAttribute('data-id');
   if (!id) return;
+  if (!currentUser) { showToast('Please sign in first'); return; }
   if (action === 'save')   saveItem(id);
   if (action === 'remove') removeItem(id);
 });
+
 document.addEventListener('change', function(e) {
-  if (e.target.getAttribute('data-action') === 'owned') {
+  if (e.target.getAttribute && e.target.getAttribute('data-action') === 'owned') {
+    if (!currentUser) return;
     toggleOwned(e.target.getAttribute('data-id'));
   }
 });
