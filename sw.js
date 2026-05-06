@@ -1,4 +1,4 @@
-var CACHE = 'mycollection-v4';
+var CACHE = 'mycollection-v5';
 var ASSETS = [
   '/mycollection/',
   '/mycollection/index.html'

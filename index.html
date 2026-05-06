@@ -186,7 +186,7 @@ body {
 <div id="app" style="display:none">
   <div id="header">
     <div id="header-inner">
-      <div id="logo"><em>my</em>collection</div>
+      <div id="logo" onclick="goHome()" style="cursor:pointer"><em>my</em>collection</div>
       <button class="nav-btn active" id="btn-search" onclick="showSearch()">Search</button>
       <button class="nav-btn" id="btn-collection" onclick="showCollection()">Collection (0)</button>
       <div id="user-info">
@@ -321,11 +321,11 @@ async function submitAuth() {
 }
 
 async function signOut() {
-  await sb.auth.signOut();
-  collection = [];
-  currentUser = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-overlay').style.display = 'flex';
+  try { await sb.auth.signOut(); } catch(e) { console.warn('signout error:', e); }
+  // Clear all state
+  collection = []; currentUser = null; itemCache = {}; lastResults = [];
+  // Reload the page — cleanest way to reset all state on both iOS and PC
+  window.location.reload();
 }
 
 // ── Load collection from Supabase ──────────────────────────────────────────
@@ -434,27 +434,44 @@ function sortResults(items, q) {
 // ── Fetch functions ────────────────────────────────────────────────────────
 function fetchAlbums(q) {
   var itunesUrl = 'https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&media=music&entity=song&limit=200&country=us';
+
   function parseAlbums(data) {
     var seen={}, freq={}, albums=[], results=data.results||[];
     for(var i=0;i<results.length;i++){
       var r=results[i]; if(!r.collectionId) continue;
       freq[r.collectionId]=(freq[r.collectionId]||0)+1;
       if(seen[r.collectionId]) continue; seen[r.collectionId]=true;
-      albums.push({id:'al-'+r.collectionId,title:r.collectionName||'',subtitle:r.artistName||'',
-        year:r.releaseDate?r.releaseDate.slice(0,4):'',type:'album',image:bigArt(r.artworkUrl100),
-        extra:r.primaryGenreName||'',_score:0});
+      albums.push({id:'al-'+r.collectionId, title:r.collectionName||'', subtitle:r.artistName||'',
+        year:r.releaseDate?r.releaseDate.slice(0,4):'', type:'album', image:bigArt(r.artworkUrl100),
+        extra:r.primaryGenreName||'', _score:0});
     }
     for(var j=0;j<albums.length;j++) albums[j]._score=freq[albums[j].id.replace('al-','')]||0;
     return sortResults(albums,q);
   }
-  // Try fetch first (works on desktop), fall back to JSONP (works on iOS)
+
+  // 1. Try direct fetch (works on desktop Chrome/Firefox)
   return fetch(itunesUrl)
     .then(function(r){ return r.json(); })
-    .then(function(data){ return parseAlbums(data); })
-    .catch(function(){
-      return jsonpFetch(itunesUrl).then(function(data){ return parseAlbums(data); });
+    .then(function(data){
+      if (!data.results) throw new Error('no results field');
+      return parseAlbums(data);
     })
-    .catch(function(){ return []; });
+    .catch(function() {
+      // 2. Try via allorigins CORS proxy (works on iOS Safari)
+      var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(itunesUrl);
+      return fetch(proxyUrl)
+        .then(function(r){ return r.json(); })
+        .then(function(wrapper){
+          var data = JSON.parse(wrapper.contents);
+          return parseAlbums(data);
+        })
+        .catch(function() {
+          // 3. Last resort: JSONP
+          return jsonpFetch(itunesUrl)
+            .then(function(data){ return parseAlbums(data); })
+            .catch(function(){ return []; });
+        });
+    });
 }
 
 function fetchMovies(q) {
@@ -613,6 +630,29 @@ function showCollection() {
   // Always reload from Supabase when opening collection tab so cross-device changes show up
   loadCollection().then(function(){ renderCollection(); });
 }
+// ── Home / reset search ───────────────────────────────────────────────────
+function goHome() {
+  document.getElementById('q').value = '';
+  document.getElementById('media-type').value = 'all';
+  document.getElementById('search-results').innerHTML = '';
+  setStatus('');
+  document.getElementById('search-empty').style.display = '';
+  document.getElementById('search-empty').querySelector('.empty-title').textContent = 'Your next favourite is out there';
+  showSearch();
+}
+
+// ── Reload collection when app becomes visible (fixes cross-device sync) ──
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && currentUser) {
+    loadCollection().then(function() {
+      if (document.getElementById('view-collection').style.display !== 'none') {
+        renderCollection();
+      }
+      updateNavBtn();
+    });
+  }
+});
+
 function updateNavBtn() {
   document.getElementById('btn-collection').textContent='Collection ('+collection.length+')';
 }
