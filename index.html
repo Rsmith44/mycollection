@@ -344,8 +344,8 @@ async function saveItem(itemId) {
   if (!item || isSaved(itemId)) return;
   var row = {
     user_id:  currentUser.id,
-    item_id:  item.id,
-    title:    item.title,
+    item_id:  itemId,
+    title:    item.title || '',
     subtitle: item.subtitle || '',
     year:     item.year || '',
     type:     item.type,
@@ -354,9 +354,14 @@ async function saveItem(itemId) {
     owned:    false
   };
   var res = await sb.from('collections').insert(row).select().single();
-  if (res.error) { console.error(res.error); showToast('Error saving item'); return; }
+  if (res.error) {
+    console.error('Save error:', res.error);
+    showToast('Error: ' + (res.error.message || 'Could not save'));
+    return;
+  }
   collection.unshift(res.data);
-  itemCache[itemId] = res.data;
+  // Keep the original search result in itemCache under its id
+  // so isSaved() keeps working — don't overwrite with DB row
   updateNavBtn();
   renderGrid('search-results', lastResults);
   showToast('Saved \u201c'+item.title+'\u201d');
@@ -427,19 +432,21 @@ function sortResults(items, q) {
 // ── Fetch functions ────────────────────────────────────────────────────────
 function fetchAlbums(q) {
   var url = 'https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&media=music&entity=song&limit=200&country=us';
-  return jsonpFetch(url).then(function(data){
-    var seen={}, freq={}, albums=[], results=data.results||[];
-    for(var i=0;i<results.length;i++){
-      var r=results[i]; if(!r.collectionId) continue;
-      freq[r.collectionId]=(freq[r.collectionId]||0)+1;
-      if(seen[r.collectionId]) continue; seen[r.collectionId]=true;
-      albums.push({id:'al-'+r.collectionId,title:r.collectionName||'',subtitle:r.artistName||'',
-        year:r.releaseDate?r.releaseDate.slice(0,4):'',type:'album',image:bigArt(r.artworkUrl100),
-        extra:r.primaryGenreName||'',_score:0});
-    }
-    for(var j=0;j<albums.length;j++) albums[j]._score=freq[albums[j].id.replace('al-','')]||0;
-    return sortResults(albums,q);
-  }).catch(function(){ return []; });
+  return fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var seen={}, freq={}, albums=[], results=data.results||[];
+      for(var i=0;i<results.length;i++){
+        var r=results[i]; if(!r.collectionId) continue;
+        freq[r.collectionId]=(freq[r.collectionId]||0)+1;
+        if(seen[r.collectionId]) continue; seen[r.collectionId]=true;
+        albums.push({id:'al-'+r.collectionId,title:r.collectionName||'',subtitle:r.artistName||'',
+          year:r.releaseDate?r.releaseDate.slice(0,4):'',type:'album',image:bigArt(r.artworkUrl100),
+          extra:r.primaryGenreName||'',_score:0});
+      }
+      for(var j=0;j<albums.length;j++) albums[j]._score=freq[albums[j].id.replace('al-','')]||0;
+      return sortResults(albums,q);
+    }).catch(function(){ return []; });
 }
 
 function fetchMovies(q) {
