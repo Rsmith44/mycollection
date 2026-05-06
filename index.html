@@ -515,7 +515,6 @@ function doSearch() {
 
 // ── Card HTML ──────────────────────────────────────────────────────────────
 function cardHtml(item) {
-  // item can be a search result object OR a DB row — normalise
   var itemId  = item.item_id || item.id;
   var title   = item.title||'';
   var subtitle= item.subtitle||'';
@@ -532,12 +531,15 @@ function cardHtml(item) {
 
   var img=image?'<img src="'+esc(image)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'';
   var ownedBadge=owned?'<span class="owned-badge">OWNED</span>':'';
+
+  // Use data-id attributes + delegated click handlers instead of inline onclick
+  // This avoids HTML-escaping breaking the JS call
   var saveBtn=saved
-    ? '<button class="btn-remove" onclick="removeItem(\''+esc(itemId)+'\')">&#10003; Saved &mdash; Remove</button>'
-    : '<button class="btn-save"   onclick="saveItem(\''+esc(itemId)+'\')">+ Save to Collection</button>';
+    ? '<button class="btn-remove" data-action="remove" data-id="'+esc(itemId)+'">&#10003; Saved &mdash; Remove</button>'
+    : '<button class="btn-save"   data-action="save"   data-id="'+esc(itemId)+'">+ Save to Collection</button>';
   var ownedRow=saved
     ? '<div class="owned-row">'
-      +'<input class="owned-checkbox" type="checkbox" id="own-'+esc(itemId)+'" '+(owned?'checked':'')+' onchange="toggleOwned(\''+esc(itemId)+'\')" />'
+      +'<input class="owned-checkbox" type="checkbox" data-action="owned" data-id="'+esc(itemId)+'" id="own-'+esc(itemId)+'" '+(owned?'checked':'')+'>'
       +'<label class="owned-label" for="own-'+esc(itemId)+'">I own this</label>'
       +'</div>'
     : '';
@@ -558,6 +560,22 @@ function renderGrid(id, items) {
   var h=''; for(var i=0;i<items.length;i++) h+=cardHtml(items[i]);
   document.getElementById(id).innerHTML=h;
 }
+
+// Delegated click/change handler for all card actions
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var action = btn.getAttribute('data-action');
+  var id     = btn.getAttribute('data-id');
+  if (!id) return;
+  if (action === 'save')   saveItem(id);
+  if (action === 'remove') removeItem(id);
+});
+document.addEventListener('change', function(e) {
+  if (e.target.getAttribute('data-action') === 'owned') {
+    toggleOwned(e.target.getAttribute('data-id'));
+  }
+});
 
 // ── Nav ────────────────────────────────────────────────────────────────────
 function showSearch() {
